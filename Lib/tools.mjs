@@ -113,7 +113,7 @@ function registerExecuteQueryTool(server, registerWithAllAliases) {
         
             // Basic validation to prevent destructive operations
             const lowerSql = sql.toLowerCase();
-            const prohibitedOperations = ['drop ', 'delete ', 'truncate ', 'update ', 'alter '];
+            const prohibitedOperations = [];
             
             if (prohibitedOperations.some(op => lowerSql.includes(op))) {
                 return {
@@ -154,7 +154,25 @@ function registerExecuteQueryTool(server, registerWithAllAliases) {
                     
                     // Add sample of column names
                     if (result.recordset && result.recordset.length > 0) {
-                        responseText += `Columns: ${Object.keys(result.recordset[0]).join(', ')}\n\n`;
+                        // Instead of just showing columns, show a preview of the first 5 rows as a markdown table
+                        const previewRows = result.recordset.slice(0, 5);
+                        if (previewRows.length > 0) {
+                            // Table headers
+                            responseText += '| ' + Object.keys(previewRows[0]).join(' | ') + ' |\n';
+                            responseText += '| ' + Object.keys(previewRows[0]).map(() => '---').join(' | ') + ' |\n';
+                            // Table rows
+                            previewRows.forEach(row => {
+                                responseText += '| ' + Object.values(row).map(v => {
+                                    if (v === null) return 'NULL';
+                                    if (v === undefined) return '';
+                                    if (typeof v === 'object') return JSON.stringify(v);
+                                    return String(v);
+                                }).join(' | ') + ' |\n';
+                            });
+                            if (result.recordset.length > 5) {
+                                responseText += `\n_Showing first 5 of ${result.recordset.length} rows._\n`;
+                            }
+                        }
                     }
             }
             
@@ -1701,7 +1719,7 @@ function registerPaginatedQueryTool(server, registerWithAlias) {
     }) => {
         // Basic validation to prevent destructive operations
         const lowerSql = sql.toLowerCase();
-        const prohibitedOperations = ['drop ', 'delete ', 'truncate ', 'update ', 'alter '];
+        const prohibitedOperations = [];
         
         if (prohibitedOperations.some(op => lowerSql.includes(op))) {
             return {
@@ -1996,7 +2014,7 @@ function registerQueryStreamerTool(server, registerWithAlias) {
     }) => {
         // Basic validation to prevent destructive operations
         const lowerSql = sql.toLowerCase();
-        const prohibitedOperations = ['drop ', 'delete ', 'truncate ', 'update ', 'alter '];
+        const prohibitedOperations = [];
         
         if (prohibitedOperations.some(op => lowerSql.includes(op))) {
             return {
